@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+        <title>Babylon.js sample code</title>
+
+        <!-- Babylon.js -->
+        <script src="https://code.jquery.com/pep/0.4.2/pep.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.6.2/dat.gui.min.js"></script>
+        <script src="https://preview.babylonjs.com/ammo.js"></script>
+        <script src="https://preview.babylonjs.com/cannon.js"></script>
+        <script src="https://preview.babylonjs.com/Oimo.js"></script>
+        <script src="https://preview.babylonjs.com/gltf_validator.js"></script>
+        <script src="https://preview.babylonjs.com/earcut.min.js"></script>
+        <script src="https://preview.babylonjs.com/babylon.js"></script>
+        <script src="https://preview.babylonjs.com/inspector/babylon.inspector.bundle.js"></script>
+        <script src="https://preview.babylonjs.com/materialsLibrary/babylonjs.materials.min.js"></script>
+        <script src="https://preview.babylonjs.com/proceduralTexturesLibrary/babylonjs.proceduralTextures.min.js"></script>
+        <script src="https://preview.babylonjs.com/postProcessesLibrary/babylonjs.postProcess.min.js"></script>
+        <script src="https://preview.babylonjs.com/loaders/babylonjs.loaders.js"></script>
+        <script src="https://preview.babylonjs.com/serializers/babylonjs.serializers.min.js"></script>
+        <script src="https://preview.babylonjs.com/gui/babylon.gui.min.js"></script>
+
+        <style>
+            html, body {
+                overflow: hidden;
+                width: 100%;
+                height: 100%;
+                margin: 0;
+                padding: 0;
+            }
+
+            #renderCanvas {
+                width: 100%;
+                height: 100%;
+                touch-action: none;
+            }
+        </style>
+    </head>
+<body>
+    <canvas id="renderCanvas"></canvas>
+    <script>
+        var canvas = document.getElementById("renderCanvas");
+
+var createScene = function () {
+
+    // This creates a basic Babylon Scene object (non-mesh)
+    var scene = new BABYLON.Scene(engine);
+
+    // This creates and positions a free camera (non-mesh)
+    var camera = new BABYLON.FreeCamera("camera1", new BABYLON.Vector3(0, 5, -10), scene);
+
+    // This targets the camera to scene origin
+    camera.setTarget(BABYLON.Vector3.Zero());
+
+    // This attaches the camera to the canvas
+    camera.attachControl(canvas, true);
+
+    // This creates a light, aiming 0,1,0 - to the sky (non-mesh)
+    var light = new BABYLON.HemisphericLight("light1", new BABYLON.Vector3(0, 1, 0), scene);
+
+    // Default intensity is 1. Let's dim the light a small amount
+    light.intensity = 0.8;
+    light.specular = new BABYLON.Color3(0.9, 0.4, 0.9);
+
+    var gl = new BABYLON.GlowLayer("glow", scene);
+    gl.intensity = 0.1;
+    // Our built-in 'sphere' shape. Params: name, subdivs, size, scene
+    var sphere = BABYLON.Mesh.CreateSphere("sphere1", 8, 2, scene);
+
+    // Move the sphere upward 1/2 its height
+    sphere.position.y = 2;
+
+    // Our built-in 'ground' shape. Params: name, width, depth, subdivs, scene
+ //   var ground = BABYLON.Mesh.CreateGround("ground1", 6, 6, 2, scene);
+   
+    var ground = BABYLON.Mesh.CreateGroundFromHeightMap("ground",
+        "Lava_005_DISP.png",
+        10, 10, 400, 0, 0.4, scene, false);
+
+
+    var material = new BABYLON.PBRMaterial("mat", scene);
+    material.albedoTexture = new BABYLON.Texture("Lava_005_COLOR.jpg", scene);
+
+    material.bumpTexture = new BABYLON.Texture("Lava_005_NORM.jpg", scene);
+    material.bumpTexture.level = 0.5;
+    //   material.bumpTexture.uScale = 2;
+    //       material.bumpTexture.vScale = 2;
+    material.emissiveTexture = new BABYLON.Texture("spider_webs_compressed.jpg", scene);
+    material.emissiveColor = new BABYLON.Color3(245/255, 20/255, 20/255);
+//    material.specularTexture = new BABYLON.Texture("Lava_005_DISP.jpg", scene);
+    material.ambientTexture = new BABYLON.Texture("Lava_005_OCC.jpg", scene);
+
+    material.metallicTexture = new BABYLON.Texture("Lava_005_ROUGH.jpg", scene);
+
+    material.roughness = 1;
+    material.metallic = 0.1;
+        material.useRoughnessFromMetallicTextureAlpha = true;
+    material.useRoughnessFromMetallicTextureGreen = false;
+    material.useMetallnessFromMetallicTextureBlue = false;
+    ground.material = material;
+    sphere.material = material;
+/*
+material.clearCoat.isEnabled = true;
+material.clearCoat.bumpTexture = new BABYLON.Texture("Lava_005_NORM.jpg", scene);
+material.clearCoat.bumpTexture.level = 0.0;
+*/
+    var alpha = 0;
+    scene.registerBeforeRender(function () {
+      material.albedoTexture.uOffset += 0.001;
+       material.bumpTexture.uOffset += 0.001;
+     //   material.bumpTexture.vOffset -= 0.01;
+        material.ambientTexture.uOffset += 0.001;
+      material.metallicTexture.uOffset += 0.001;   
+      material.emissiveTexture.uOffset += 0.01; 
+     material.emissiveTexture.vOffset -= 0.005; 
+      ground.scaling.y += Math.sin(alpha) / 300;   
+        //  material.diffuseTexture.vOffset += 0.005;
+        //    material.bumpTexture.vOffset += 0.005;
+  //      material.bumpTexture.level += Math.sin(alpha) / 200;
+        gl.intensity += Math.sin(alpha*2) / 100;
+  //      console.log(material.bumpTexture.level);
+   //  console.log(gl.intensity );
+       alpha += 0.01;
+ //  console.log(ground.scaling.y);
+
+ // material.clearCoat.bumpTexture.level  += Math.sin(alpha) / 100;
+    });
+
+
+    scene.createDefaultEnvironment({
+        createGround: false,
+        createSkybox: false,
+    });
+scene.debugLayer.show();
+    return scene;
+
+};
+        
+        var engine = new BABYLON.Engine(canvas, true, { preserveDrawingBuffer: true, stencil: true });
+        var scene = createScene();
+
+        engine.runRenderLoop(function () {
+            if (scene) {
+                scene.render();
+            }
+        });
+
+        // Resize
+        window.addEventListener("resize", function () {
+            engine.resize();
+        });
+    </script>
+</body>
+</html>
