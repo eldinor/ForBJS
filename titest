@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    <title>Babylon.js example</title>
+
+    <!-- Babylon.js -->
+    <script src="https://cdn.babylonjs.com/babylon.js"></script>
+    <script src="https://cdn.babylonjs.com/inspector/babylon.inspector.bundle.js"></script>
+
+    <style>
+      html,
+      body {
+        overflow: hidden;
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        padding: 0;
+      }
+
+      #renderCanvas {
+        width: 100%;
+        height: 100%;
+        touch-action: none;
+      }
+
+      #canvasZone {
+        width: 100%;
+        height: 100%;
+      }
+
+      #button-restart {
+        position: absolute;
+        top: 10px;
+        left: 50%;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="canvasZone">
+      <canvas id="renderCanvas"></canvas>
+    </div>
+
+    <button id="button-restart">Restart Engine</button>
+
+    <script>
+      var canvas = document.getElementById("renderCanvas");
+      var engine = null;
+      var scene = null;
+
+      const createEngine = function () {
+        let engine;
+        try {
+          engine = new BABYLON.Engine(canvas, true);
+        } catch (err) {
+          console.error(err);
+        }
+        return engine;
+      };
+
+
+      const createScene = function () {
+        const scene = new BABYLON.Scene(engine);
+
+        const camera = new BABYLON.ArcRotateCamera(
+          "camera1",
+          -Math.PI / 2,
+          Math.PI / 2 - 0.4,
+          16,
+          BABYLON.Vector3.Zero(),
+          scene
+        );
+        camera.wheelDeltaPercentage = 0.01;
+        camera.attachControl(canvas, true);
+
+        const light = new BABYLON.HemisphericLight(
+          "light1",
+          new BABYLON.Vector3(1, 2, -1),
+          scene
+        );
+        light.intensity = 0.85;
+
+        // create a regular, non-thin box as a control test
+        var box = BABYLON.MeshBuilder.CreateBox("box", { size: 1 }, scene);
+
+        // create a plane using a grid of thin instances
+        
+      const createThinInstances = function () {
+        var plane = BABYLON.MeshBuilder.CreatePlane(
+          "plane",
+          { size: 1 },
+          scene
+        );
+        plane.rotate(new BABYLON.Vector3(1, 0, 0), Math.PI / 2);
+
+        console.log(plane)
+
+        // set the position for each of the 8 thin instances that form the plane
+        const positions = [
+          BABYLON.Matrix.Translation(1, 0, 0),
+          BABYLON.Matrix.Translation(1, 1, 0),
+          BABYLON.Matrix.Translation(0, 1, 0),
+          BABYLON.Matrix.Translation(-1, 1, 0),
+          BABYLON.Matrix.Translation(-1, 0, 0),
+          BABYLON.Matrix.Translation(-1, -1, 0),
+          BABYLON.Matrix.Translation(0, -1, 0),
+          BABYLON.Matrix.Translation(1, -1, 0),
+        ];
+        const idx = plane.thinInstanceAdd(positions);
+        console.log(idx);
+      };
+        createThinInstances();
+
+        return scene;
+      };
+
+
+
+      const startRenderLoop = function (engine, canvas) {
+        engine.runRenderLoop(function () {
+          if (scene && scene.activeCamera) scene.render();
+        });
+      };
+
+      const onResize = function () {
+        engine.resize();
+      };
+
+      // initialize engine + scene
+      const initialize = function () {
+        if (engine) {
+          BABYLON.Inspector.Hide();
+          engine.stopRenderLoop();
+          engine.dispose();
+          window.removeEventListener("resize", onResize);
+        }
+
+        engine = createEngine();
+        window.addEventListener("resize", onResize);
+        startRenderLoop(engine, canvas);
+        scene = createScene();
+
+        BABYLON.Inspector.Show(scene, {});
+      };
+
+      // initialize engine the first time
+      initialize();
+
+      // re-initialize engine on button click
+      const restartButton = document.querySelector("#button-restart");
+      restartButton.addEventListener("click", () => {
+        initialize();
+      });
+    </script>
+  </body>
+</html>
